@@ -3,9 +3,24 @@ from datetime import datetime
 
 conn = sqlite3.Connection("event_register.db", check_same_thread=False)
 cur = conn.cursor()
-current_datetime = str(datetime.now().day) + "." + str(datetime.now().month) + "." + \
-                   str(datetime.now().year) + " " + str(datetime.now().hour) + ":" + \
-                   str(datetime.now().minute) + ":" + str(datetime.now().second)
+
+
+def get_datetime_now():
+    day = str(datetime.now().day)
+    month = str(datetime.now().month)
+    hour = str(datetime.now().hour)
+    minute = str(datetime.now().minute)
+    second = str(datetime.now().second)
+    day = ("0" + day) if 0 <= int(day) <= 9 else day
+    month = ("0" + month) if 0 <= int(month) <= 9 else month
+    hour = ("0" + hour) if 0 <= int(hour) <= 9 else hour
+    minute = ("0" + minute) if 0 <= int(minute) <= 9 else minute
+    second = ("0" + second) if 0 <= int(second) <= 9 else second
+    result = day + "." + month + "." + str(datetime.now().year) + " " + hour + ":" + minute + ":" + second
+    return result
+
+
+current_datetime = get_datetime_now()
 
 
 def check_tables():
@@ -98,15 +113,15 @@ def print_events():
     data = cur.fetchall()
     text = "Вот список записанных мероприятий:\n"
     for i in data:
-        text += f"<b>{data.index(i) + 1}-е мероприятие</b>:\n"
+        text += f"  <b>{data.index(i) + 1}-е мероприятие</b>:\n"
         i = list(i)
-        text += f"<b>Название:</b> {i[0]},\n" \
-                f"<b>Описание:</b> {i[1]},\n" \
-                f"<b>Начало проведения:</b> {i[2]},\n" \
-                f"<b>Конец проведения:</b> {i[3]},\n" \
-                f"<b>Контакты:</b> {i[4]},\n" \
-                f"<b>Адрес проведения:</b> {i[5]},\n" \
-                f"<b>Дата добавления в список:</b> {i[6]}.\n\n"
+        text += f"    <b>Название:</b> {i[0]},\n" \
+                f"    <b>Описание:</b> {i[1]},\n" \
+                f"    <b>Начало проведения:</b> {i[2]},\n" \
+                f"    <b>Конец проведения:</b> {i[3]},\n" \
+                f"    <b>Контакты:</b> {i[4]},\n" \
+                f"    <b>Адрес проведения:</b> {i[5]},\n" \
+                f"    <b>Дата добавления в список:</b> {i[6]}.\n\n"
     return text
 
 
@@ -120,7 +135,7 @@ def get_event(name: str, description: str,
         cur.execute("INSERT INTO events (name, description, date_start, "
                     "date_end, contacts, address, add_date) VALUES (?, ?, ?, ?, ?, ?, ?)",
                     (name, description, date_start,
-                        date_end, contacts, address, current_datetime))
+                     date_end, contacts, address, current_datetime))
         conn.commit()
     except sqlite3.IntegrityError:
         print("Это мероприятие уже существует в таблице!")
@@ -139,8 +154,11 @@ def print_participants():
                    "<b>Мероприятие, в котором участвует:</b> ",
                    "<b>Команда на мероприятии, в которой состоит:</b> ", "<b>Организация:</b> ",
                    "<b>Email:</b> ", "<b>Дата рождения:</b> "]
-    for i in range(0, len(text_values) - 1):
-        text += f"{text_values[i]}{values[i]},\n"
+    if len(values) > 0:
+        for i in range(0, len(text_values) - 1):
+            text += f"  {text_values[i]}{values[i]},\n"
+    else:
+        text = "<b><u>Никаких участников нет!</u></b>"
     return text
 
 
@@ -155,8 +173,8 @@ def get_participant(user_id: int, name: str, surname: str, patronymic: str,
                     "event_partic, command, organization, email, birth_date, add_date) "
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     (user_id, name, surname, patronymic,
-                        event_partic, command,
-                        organization, email, birth_date, current_datetime))
+                     event_partic, command,
+                     organization, email, birth_date, current_datetime))
         conn.commit()
     except sqlite3.IntegrityError:
         print("Этот пользователь уже существует в таблице!")
@@ -178,6 +196,7 @@ def clear_table(table: str):
     if table in ["participants", "events", "sent_messages"]:
         cur.execute(f"DELETE FROM {table}")
         data = cur.fetchall()
+        conn.commit()
         return data
     else:
         return False
@@ -206,6 +225,8 @@ def test():
             print(prepare_event_list())
         elif command == "add_ev":
             get_event("RoboCup", "test", "##.##.####", "##.##.####", "abcdeab", "test_2")
+        elif command == "add_ev_user":
+            get_event()
         elif command == "add_pa":
             get_participant(1270000, "qwe", "rty", "RoboCup", "iop", "test", "test_1", "test_2", "##.##.####")
         elif command == "add_se":

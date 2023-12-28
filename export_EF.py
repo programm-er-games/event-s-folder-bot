@@ -15,7 +15,7 @@ def remove_quotes_from_path(path: str):
         return path
 
 
-def is_exists_and_normal(src_path: str, src_name: str, dst_path: str, dst_name: str):
+def is_exists_and_normal(src_path: str, src_name: str, dst_path: str, dst_name: str):  # поменять название функции
     is_file_exist = os.path.exists(src_path + src_name)
     if is_file_exist:
         try:
@@ -26,7 +26,6 @@ def is_exists_and_normal(src_path: str, src_name: str, dst_path: str, dst_name: 
         else:
             return True
     else:
-        global file
         file = open(dst_path + dst_name, "a+")
         return True
 
@@ -45,6 +44,7 @@ def prepare_name_string(name: str, path: str):
 
 
 def export_to_xlsx(path="", name=""):
+
     path = "\\" if path == "" else remove_quotes_from_path(path)
     cur_datetime = current_datetime.split(".", 2)
     temp = "-".join(cur_datetime)
@@ -56,8 +56,9 @@ def export_to_xlsx(path="", name=""):
     with pandas.ExcelWriter(path + name) as f:
         for i in ["events", "participants", "sent_messages"]:
             data_file = pandas.read_sql(f'SELECT * FROM {i}', connect)
-            data_file.to_excel(f, sheet_name=i, na_rep="--", startrow=1)
+            data_file.to_excel(f, sheet_name=i, na_rep="--")
+    return f"Успешно! Файл сохранен в: {path + name}", path + name
 
 
 if __name__ == '__main__':
-    export_to_xlsx("C:\\")
+    print(export_to_xlsx("C:\\"))

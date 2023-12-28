@@ -1,10 +1,10 @@
 import telebot
 from telebot import types
 
-from about_func_AF import about
+from about_func_EF import about
 from sql_EF import clear_table, get_info_about_message, get_participant, \
     print_participants, print_events, prepare_event_text, check_tables, \
-    prepare_event_list
+    prepare_event_list, get_event
 from config import event_reg_bot
 from check_formats_EF import check_email_format, check_birth_date_format
 
@@ -37,10 +37,6 @@ is_force_exit = False
 is_debug = False
 is_blocked = False
 is_finished = False
-
-# TODO: Переписать набор вопросов для верификации разработчика
-# TODO: Переписать нормально функции админа
-# TODO: Переписать функцию manager
 
 
 def manager(message):
@@ -122,20 +118,20 @@ def admin(message):
                     debug_stage = 0
                 bot.send_message(message.from_user.id, text, parse_mode='html')
 
-            case 4:
+            case 3:
                 if message.text == "1":
                     text = "Теперь я верю тебе. Ты разработчик."
-                    debug_stage += 2
+                    debug_stage += 1
                     is_debug = True
+                elif message.text == "2":
+                    text = "Почти угадал. Но кое-где ты просчитался. Ты не разработчик."
+                    is_debug = False
+                    debug_stage = 0
 
                 else:
-                    if message.text == "2":
-                        text = "Почти угадал. Но кое-где ты просчитался. Ты не разработчик."
-
-                    else:
-                        text = "Не-а, даже не близко. Ты не разработчик."
-                        is_debug = False
-                        debug_stage = 0
+                    text = "Не-а, даже не близко. Ты не разработчик."
+                    is_debug = False
+                    debug_stage = 0
                 bot.send_message(message.from_user.id, text, parse_mode='html')
 
                 if is_debug:
@@ -144,7 +140,25 @@ def admin(message):
                            "можно командой /!admin"
                     bot.send_message(message.from_user.id, text)
     else:
-        if message.text.startswith("/pr"):
+        if debug_stage == 5:
+            message.text += "\n"
+            info = []
+            temp = ""
+            is_start = False
+            for i in message.text:
+                if i == "\n" and is_start:
+                    info.append(temp[1:])
+                    temp = ""
+                    is_start = False
+                elif i == ":":
+                    is_start = True
+                elif is_start:
+                    temp += i
+            get_event(info[0], info[1], info[2], info[3], info[4], info[5])
+            bot.send_message(message.from_user.id, f"Добавление мероприятия прошло успешно!")
+            debug_stage -= 1
+
+        elif message.text.startswith("/pr"):
             if message.text == "/prpa":
                 bot.send_message(message.from_user.id, print_participants(), parse_mode='html')
 
@@ -174,15 +188,34 @@ def admin(message):
         elif message.text.startswith("/export"):
             from export_EF import export_to_xlsx
             temp = message.text.split(" ")
+            result, dst = "", ""
             match len(temp):
                 case 1:
-                    export_to_xlsx()
+                    result, dst = export_to_xlsx()
 
                 case 2:
-                    export_to_xlsx(temp[1])
+                    result, dst = export_to_xlsx(temp[1])
 
                 case 3:
-                    export_to_xlsx(temp[1], temp[2])
+                    result, dst = export_to_xlsx(temp[1], temp[2])
+            bot.send_message(message.from_user.id, result)
+            temp_file = open(dst, "rb")
+            bot.send_document(message.from_user.id, temp_file)
+            temp_file.close()
+
+        elif message.text == "/add_event":
+            text = "Для добавления реального мероприятия скопируйте сообщение-форму, " \
+                   "которое сейчас будет выслано, вставьте в поле для ввода сообщений " \
+                   "и \"заполните\" её соответственно полям (без запятых после значений)"
+            bot.send_message(message.from_user.id, text, parse_mode='html')
+            text = "<b>Название:</b> \n" \
+                   "<b>Описание:</b> \n" \
+                   "<b>Начало проведения:</b> \n" \
+                   "<b>Конец проведения:</b> \n" \
+                   "<b>Контакты:</b> \n" \
+                   "<b>Адрес проведения:</b> "
+            bot.send_message(message.from_user.id, text, parse_mode='html')
+            debug_stage += 1
 
         elif message.text == "/ahelp":
             bot.send_message(message.from_user.id,
@@ -199,12 +232,12 @@ def admin(message):
                              "participants из БД;\n\n"
                              "    <u>/prev</u> - print events - выводит данные таблицы "
                              "events из БД;\n\n"
-                             "    <u>/export [путь] [имя]</u> - производит экспорт данных в Excel-файл "
-                             "по указанному пути в файл с указанным именем;"
+                             "    <u>/export</u> <u>[путь]</u> <u>[имя]</u> - производит экспорт данных в Excel-файл "
+                             "по указанному пути в файл с указанным именем;\n\n"
                              "    <u>/!admin</u> - not admin - выход из режима разработчика "
                              "с возвращением на тот этап программы/сценария, на котором была вызвана "
                              "команда /admin.\n\n\n"
-                             "Будьте осторожны! <b>Нерациональное изменение параметров может "
+                             "Будьте осторожны! <b>Нерациональное использование команд может "
                              "повлиять на работу всего сценария!</b>",
                              parse_mode='html')
 
@@ -226,10 +259,10 @@ def non_admin(message):
     debug_stage = 0
     is_debug = False
     message.text = ""
-    start(message) if current_stage == "None" else register(message)
+    start(message) if current_stage == "None" and message.text == "/start" else register(message)
 
 
-def finish_session(message):
+def finish_session(message: types.Message | types.CallbackQuery):
     """
         This function changes the variables to their initial values and add abiturient's data to DB. Nothing returns
     """
@@ -251,23 +284,40 @@ def finish_session(message):
     is_force_exit = False
 
 
+@bot.callback_query_handler(func=lambda c: c.data == "yes")
+def verify_yes(callback: types.CallbackQuery):
+    global current_stage
+    bot.answer_callback_query(callback.id)
+    if current_stage == "Подтверждение":
+        text = "Хорошо! Для начала хотелось бы знать, " \
+               "в какой школе/ВУЗе/кружке Вы обучаетесь/работаете?"
+        event_data["name"] = "RoboCup Russia Open"
+        bot.send_message(callback.from_user.id, text)
+        current_stage = "Ввод данных: организация"
+
+
+@bot.callback_query_handler(func=lambda c: c.data == "no")
+def verify_no(callback: types.CallbackQuery):
+    global current_stage, is_finished
+    bot.answer_callback_query(callback.id)
+    if current_stage == "Подтверждение":
+        text = "Ну, на нет - и суда нет. До свидания!"
+        bot.send_message(callback.from_user.id, text, reply_markup=markup_remove)
+        finish_session(callback)
+        is_finished = True
+
+
 @bot.callback_query_handler(func=lambda c: c.data == "event_list")
 def event_list(callback: types.CallbackQuery):
     global current_stage
     bot.answer_callback_query(callback.id)
-    is_test = True
-    if is_test:
+    if current_stage == "Старт":
         text = prepare_event_list()
-        bot.send_message(callback.from_user.id, text, parse_mode='html')
-
-    else:
-        text = "Пока из доступных мероприятий Вы можете зарегистрироваться только на " \
-               "\"RoboCup Russia Open\". Интересует?"
-        yes = types.KeyboardButton("Да")
-        no = types.KeyboardButton("Нет")
-        markup_choice = types.ReplyKeyboardMarkup(resize_keyboard=True).add(yes, no, row_width=2)
-        bot.send_message(callback.from_user.id, text, reply_markup=markup_choice)
-    current_stage = "Подтверждение"
+        yes = types.InlineKeyboardButton("Да", callback_data="yes")
+        no = types.InlineKeyboardButton("Нет", callback_data="no")
+        markup_choice = types.InlineKeyboardMarkup().add(yes, no)
+        bot.send_message(callback.from_user.id, text, parse_mode='html', reply_markup=markup_choice)
+        current_stage = "Подтверждение"
 
 
 def start(message):
@@ -275,29 +325,16 @@ def start(message):
     text = "Привет! Добро пожаловать в систему регистрации на мероприятия ЮФУ! " \
            "Я готов помочь Вам зарегистрироваться на интересующие Вас мероприятия. Давайте начнём!\n" \
            "<b>Нажмите на кнопку снизу этого сообщения, если хотите продолжить работу с ботом</b>"
-    inline_button = types.InlineKeyboardButton("Показать список мероприятий", callback_data="event_list")
-    inline_keyboard = types.InlineKeyboardMarkup().add(inline_button)
-    bot.send_message(message.from_user.id, text, reply_markup=inline_keyboard, parse_mode='html')
+    show_list = types.InlineKeyboardButton("Показать список мероприятий", callback_data="event_list")
+    markup_show = types.InlineKeyboardMarkup().add(show_list)
+    bot.send_message(message.from_user.id, text, reply_markup=markup_show, parse_mode='html')
     current_stage = "Старт"
 
 
 def register(message):
     global is_finished, current_stage
-    if current_stage == "Подтверждение":
-        if message.text == "Да":
-            text = "Хорошо! Для начала хотелось бы знать, " \
-                   "в какой школе/ВУЗе/кружке Вы обучаетесь/работаете?"
-            event_data["name"] = "RoboCup Russia Open"
-            bot.send_message(message.from_user.id, text)
-            current_stage = "Ввод данных: организация"
-
-        elif message.text == "Нет":
-            text = "Ну, на нет - и суда нет. До свидания!"
-            bot.send_message(message.from_user.id, text, reply_markup=markup_remove)
-            finish_session(message)
-            is_finished = True
-
-    elif current_stage == "Ввод данных: организация":
+    if current_stage == "Ввод данных: организация":
+        participant_data["organization"] = message.text
         text = "Хорошо! Тогда напишите мне, как будет называться команда, " \
                "в которую Вы хотите вступить"
         bot.send_message(message.from_user.id, text, reply_markup=markup_remove)

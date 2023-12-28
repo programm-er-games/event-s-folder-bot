@@ -48,12 +48,10 @@ def queue_manager(message):
 
 
 if __name__ == "__main__":
-    from datetime import datetime
+    from sql_EF import get_datetime_now
 
     # используем точное время запуска бота для отладки
-    print(str(datetime.now().day) + "." + str(datetime.now().month) + "." +
-          str(datetime.now().year) + " " + str(datetime.now().hour) + ":" +
-          str(datetime.now().minute) + ":" + str(datetime.now().second))
+    print(get_datetime_now())
     bot.polling(non_stop=True, timeout=5, skip_pending=True)
 else:
     raise SystemExit("Это главный исполняемый файл, он должен запускаться первым в порядке")
