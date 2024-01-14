@@ -123,6 +123,7 @@ def admin(message):
                     text = "Теперь я верю тебе. Ты разработчик."
                     debug_stage += 1
                     is_debug = True
+
                 elif message.text == "2":
                     text = "Почти угадал. Но кое-где ты просчитался. Ты не разработчик."
                     is_debug = False
