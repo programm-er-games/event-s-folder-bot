@@ -1,7 +1,7 @@
 import sqlite3
 from datetime import datetime
 
-conn = sqlite3.Connection("event_register.db", check_same_thread=False)
+conn = sqlite3.Connection("C:\\Windows.old\\Users\\User\\Documents\\GitHub\\event-s-folder-bot\\event_register.db", check_same_thread=False)
 cur = conn.cursor()
 
 
@@ -64,34 +64,35 @@ def check_tables():
 
 
 def prepare_event_text(event: str, is_start: bool):
-    try:
-        text = ""
-        name = cur.execute(f"SELECT name FROM events WHERE name == \"{event}\"").fetchone()[0]
-        desc = cur.execute(f"SELECT description FROM events WHERE name = \"{event}\"").fetchone()[0]
-        date_start = cur.execute(f"SELECT date_start FROM events WHERE name = \"{event}\"").fetchone()[0]
-        date_end = cur.execute(f"SELECT date_end FROM events WHERE name = \"{event}\"").fetchone()[0]
-        contacts = cur.execute(f"SELECT contacts FROM events WHERE name = \"{event}\"").fetchone()[0]
-        address = cur.execute(f"SELECT address FROM events WHERE name = \"{event}\"").fetchone()[0]
-        if is_start:
-            text += f"Имя мероприятия: <u>{name}</u>\n"
-            text += f"Описание:\n{desc}\n"
-            text += f"Дата проведения: {date_start} - {date_end},\n"
-            text += f"Адрес проведения: {address},\n"
-            text += f"Контакты:\n{contacts}\n"
-            text += f"Вы хотите записаться на это мероприятие? Если хотите, то напишите \"Да\", иначе - \"Нет\""
-        else:
-            text += f"Ты записан на мероприятие \"{name}\", "
-            text += f"которое пройдёт по адресу: {address}."
-            text += f"\n\n{desc}\n\n"
-            text += f"Мероприятие пройдёт с {date_start} по {date_end}.\n"
-            temp = ""
-            for i in contacts:
-                temp += ("  " + i) if contacts.index(i, __stop=0) == contacts[0] else ((i + "  ") if i == "\n" else i)
-            contacts = temp
-            text += f"Если будут вопросы и/или пожелания, то обращайтесь по этим контактам:\n{contacts}"
-        return text
-    except TypeError:
-        return "<b><u>Никаких мероприятий нет!</u></b>"
+    # try:
+    text = ""
+    name = cur.execute(f"SELECT name FROM events WHERE name == \"{event}\"").fetchone()[0]
+    desc = cur.execute(f"SELECT description FROM events WHERE name = \"{event}\"").fetchone()[0]
+    date_start = cur.execute(f"SELECT date_start FROM events WHERE name = \"{event}\"").fetchone()[0]
+    date_end = cur.execute(f"SELECT date_end FROM events WHERE name = \"{event}\"").fetchone()[0]
+    contacts = cur.execute(f"SELECT contacts FROM events WHERE name = \"{event}\"").fetchone()[0]
+    address = cur.execute(f"SELECT address FROM events WHERE name = \"{event}\"").fetchone()[0]
+    if is_start:
+        text += f"Имя мероприятия: <u>{name}</u>\n"
+        text += f"Описание:\n{desc}\n"
+        text += f"Дата проведения: {date_start} - {date_end},\n"
+        text += f"Адрес проведения: {address},\n"
+        text += f"Контакты:\n{contacts}\n"
+        text += f"Вы хотите записаться на это мероприятие? Если хотите, то напишите \"Да\", иначе - \"Нет\""
+    else:
+        text += f"Ты записан на мероприятие \"{name}\", "
+        text += f"которое пройдёт по адресу: {address}."
+        text += f"\n\n{desc}\n\n"
+        text += f"Мероприятие пройдёт с {date_start} по {date_end}.\n"
+        temp = ""
+        for i in contacts:
+            temp += ("  " + i) if contacts.index(i) == contacts[0] else ((i + "  ") if i == "\n" else i)
+        contacts = temp
+        text += f"Если будут вопросы и/или пожелания, то обращайтесь по этим контактам:\n{contacts}"
+    return text
+    # except TypeError:
+    #     print("Error")
+    #     return "<b><u>Никаких мероприятий нет!</u></b>"
 
 
 def prepare_event_list():
@@ -225,8 +226,6 @@ def test():
             print(prepare_event_list())
         elif command == "add_ev":
             get_event("RoboCup", "test", "##.##.####", "##.##.####", "abcdeab", "test_2")
-        elif command == "add_ev_user":
-            get_event()
         elif command == "add_pa":
             get_participant(1270000, "qwe", "rty", "RoboCup", "iop", "test", "test_1", "test_2", "##.##.####")
         elif command == "add_se":

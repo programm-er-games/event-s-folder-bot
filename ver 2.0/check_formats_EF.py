@@ -33,21 +33,31 @@ def check_birth_date_format(checkstring: str):
     from datetime import datetime
     current_year = datetime.now().year
     temp = checkstring.split(".")
-    result = ""
     try:
-        day = int(temp[0])
-        month = int(temp[1])
-        year = int(temp[2])
-        if not(0 <= day <= 31):
-            result = "correct, but error"
-        elif not(0 <= month <= 12):
-            result = "correct, but error"
-        if (1800 <= year <= 9999) and year < current_year:
-            if current_year - year >= 5:
-                result = checkstring
+        day, month, year = 0, 0, 0
+        if len(temp) == 3:
+            day = int(temp[0])
+            month = int(temp[1])
+            year = int(temp[2])
         else:
-            result = "correct, but error"
-    except ValueError:
-        result = "error"
-    finally:
-        return result
+            return "error"
+        if (not (0 <= day <= 31)
+                or not (0 <= month <= 12)
+                or not ((1800 <= year <= 9999) and year < current_year)):
+            return "correct, but error"
+        else:
+            # if current_year - year >= 5:
+            return checkstring
+    except Exception as e:
+        print(e)
+        return "error"
+
+
+if __name__ == '__main__':
+    print(check_birth_date_format("30 12 2005") + " - должно быть неверно")
+    print(check_birth_date_format("32.12.2005") + " - должно быть верно, но нет")
+    print(check_birth_date_format("31.13.2005") + " - должно быть верно, но нет")
+    print(check_birth_date_format("31.12.10000") + " - должно быть верно, но нет")
+    print(check_birth_date_format("10.12.2004") + " - должно быть всё верно")
+    raise SystemExit("Этот файл не должен запускаться как основной скрипт!")
+

@@ -26,7 +26,7 @@ def is_exists_and_normal(src_path: str, src_name: str, dst_path: str, dst_name: 
         else:
             return True
     else:
-        file = open(dst_path + dst_name, "a+")
+        open(dst_path + dst_name, "a+")
         return True
 
 

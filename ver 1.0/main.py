@@ -15,8 +15,10 @@ def main(message):
         If yes, then we run the distributing function,
         otherwise we send a message that this user cannot use the bot yet
     """
-    queue_manager(message) if message.from_user.id == start_id or start_id == 0 \
-        else bot.send_message(message.from_user.id,
+    if message.from_user.id == start_id or start_id == 0:
+        queue_manager(message)
+    else:
+        bot.send_message(message.from_user.id,
                               "Вы находитесь в очереди, поэтому <b>Вы не можете начать работу с ботом</b>.\n"
                               "Мы пришлём Вам сообщение, "
                               "как только другой пользователь закончит работу с ним",
@@ -44,9 +46,15 @@ def queue_manager(message):
         if queue_id:
             bot.send_message(queue_id[0], "Теперь <b>Вы</b> можете начать работу с ботом!", parse_mode='html')
             start_id = queue_id[0]
+            del queue_id[0]
 
 
 if __name__ == "__main__":
+    raise SystemExit("Эта версия выведена из строя в связи с переходом на новую версию.\n"
+                     "Данная версия имеет некоторые критические баги и ошибки, которые надо "
+                     "было исправить перед внезапной презентацией бота, "
+                     "а времени на них категорически не хватает.\n"
+                     "Не рекомендуется использовать!")
     print("Starting \"Event's folder\" bot...")
     from sql_EF import get_datetime_now
 

@@ -44,7 +44,7 @@ def manager(message):
         This function determines which stage the user is currently at and what needs to be done at this stage.
         Returns True, if program has been finished, else False
     """
-    global current_stage, debug_stage, is_debug
+    global current_stage, debug_stage, is_debug, is_finished
     if message.text == "/start":
         check_tables()
     # recording necessary info about sent message
