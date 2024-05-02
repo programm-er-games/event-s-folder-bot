@@ -1,8 +1,0 @@
-database_access_bot_TOKEN = "5525820891:AAGjpUxKM7tOZ_AZuKztUIJM20yrHu2fRxU"
-qpwoert_bot_TOKEN = "5585745679:AAFQAd718ggCHrkBVYrS5PhCBcylf9sOOYY"
-quiz_sfedu_bot_TOKEN = "5404566997:AAEucdSMAYpYI1X4Joid7YAzGrUDvYA9EtA"
-FeedbackAboutBots_bot_TOKEN = "5418331870:AAFBACbUNonA1C8wwyk0oduMCSSoLOSS9MU"
-quiz_college_bot_TOKEN = "5522195966:AAEVwfjf4os294dkL9nSRJqcmDAV-IGQT28"
-daivinchik_suka_bot_TOKEN = "5710074593:AAGeBPOMvVdQdiBqoCAfGa3XXNv2iIcOQP8"
-abit_sfedu_bot = "5956756670:AAEyRJfGqHPjArD7r8KxU5_jczSkBt14m-o"
-event_reg_bot = "6652768001:AAFNHVUFFxhfaniCp7dFD4EU7oF-DqMOxCU"
