@@ -34,7 +34,7 @@ def check_birth_date_format(checkstring: str):
     current_year = datetime.now().year
     temp = checkstring.split(".")
     try:
-        day, month, year = 0, 0, 0
+        # day, month, year = 0, 0, 0
         if len(temp) == 3:
             day = int(temp[0])
             month = int(temp[1])
@@ -53,11 +53,53 @@ def check_birth_date_format(checkstring: str):
         return "error"
 
 
+def check_integer_format(checkstring: str):
+    result = ""
+    try:
+        result = int(checkstring)
+    except ValueError:
+        result = "error"
+    else:
+        result = checkstring
+    return result
+
+
+def check_phone_format(checkstring: str):
+    temp = checkstring.split("-")
+    is_all_right = True
+    is_number = False
+    is_plus_detected = False
+    for i in temp[0]:
+        if i == "+" and temp[0].index(i) == 0:
+            is_plus_detected = True
+            continue
+        if i != " " and i != "-":
+            try:
+                int(i)
+            except ValueError:
+                is_number = False
+            else:
+                is_number = True
+        is_all_right = True if is_number and is_plus_detected else False
+        if not is_all_right:
+            break
+    if len(temp[1]) == 2 and len(temp[2]) == 2 and is_all_right:
+        try:
+            int(temp[1])
+            int(temp[2])
+        except ValueError:
+            is_all_right = False
+        else:
+            is_all_right = True
+    result = checkstring if is_all_right else "error"
+    return result
+
+
 if __name__ == '__main__':
-    print(check_birth_date_format("30 12 2005") + " - должно быть неверно")
-    print(check_birth_date_format("32.12.2005") + " - должно быть верно, но нет")
-    print(check_birth_date_format("31.13.2005") + " - должно быть верно, но нет")
-    print(check_birth_date_format("31.12.10000") + " - должно быть верно, но нет")
-    print(check_birth_date_format("10.12.2004") + " - должно быть всё верно")
+    # print(check_birth_date_format("30 12 2005") + " - должно быть неверно")
+    # print(check_birth_date_format("32.12.2005") + " - должно быть верно, но нет")
+    # print(check_birth_date_format("31.13.2005") + " - должно быть верно, но нет")
+    # print(check_birth_date_format("31.12.10000") + " - должно быть верно, но нет")
+    # print(check_birth_date_format("10.12.2004") + " - должно быть всё верно")
     raise SystemExit("Этот файл не должен запускаться как основной скрипт!")
 

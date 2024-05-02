@@ -1,6 +1,7 @@
 # TODO: добавить модульность и гибкость программе
-from EF import bot, queue_manager, get_datetime_now
+from EF import bot, queue_manager
 from sql_EF import check_tables
+from datetime_EF import get_datetime_now
 
 
 @bot.message_handler(content_types=['text'])

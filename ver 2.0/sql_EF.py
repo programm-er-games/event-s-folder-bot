@@ -1,6 +1,7 @@
 # TODO: добавить модульность и гибкость программе
 # TODO: фича: делать отдельные таблицы для отдельных мероприятий
 import sqlite3
+from typing import Any
 
 conn = sqlite3.Connection("event_register.db", check_same_thread=False)
 cur = conn.cursor()
@@ -23,10 +24,8 @@ def check_tables():
                                  UNIQUE,
             username     TEXT UNIQUE
                               NOT NULL,
-            name         TEXT UNIQUE
-                              NOT NULL,
-            surname      TEXT UNIQUE
-                              NOT NULL,
+            name         TEXT NOT NULL,
+            surname      TEXT NOT NULL,
             patronymic   TEXT,
             event        TEXT NOT NULL,
             other_info   TEXT NOT NULL,
@@ -60,6 +59,7 @@ def insert(table: str, **kwargs):
             rq += "\"" + kwargs[i] + "\", "
         else:
             rq += str(kwargs[i]) + ", "
+    rq = rq[0:-2]
     rq += ")"
     cur.execute(rq)
     conn.commit()
@@ -94,11 +94,38 @@ def search_cond(table: str, columns: list, **kwargs):
     return result
 
 
-# def update(table: str, cond: tuple[str], **kwargs):
+def update(table: str, columns: dict[str, Any], **kwargs):
+    rq = "UPDATE " + table + " SET "
+    for i in columns.keys():
+        rq += i
+        if isinstance(columns[i], str):
+            rq += " = \"" + kwargs[i] + "\", "
+        else:
+            rq += " = " + str(kwargs[i]) + ", "
+    rq = rq[0:-2]
+    rq += " WHERE "
+    for i in kwargs.keys():
+        rq += i
+        if isinstance(kwargs[i], str):
+            rq += "=\"" + kwargs[i] + "\" AND "
+        else:
+            rq += "=" + str(kwargs[i]) + " AND "
+    rq = rq[0:-5]
+    cur.execute(rq)
+    conn.commit()
 
 
-# def delete(table: str, cond: dict[str], *args):
-
+def delete(table: str, **kwargs):
+    rq = "DELETE FROM " + table + " WHERE "
+    for i in kwargs.keys():
+        rq += i
+        if isinstance(kwargs[i], str):
+            rq += "=\"" + kwargs[i] + "\" AND "
+        else:
+            rq += "=" + str(kwargs[i]) + " AND "
+    rq = rq[0:-5]
+    cur.execute(rq)
+    conn.commit()
 
 # def test():
 #     print(", ".join(["name", "fgh"]))
