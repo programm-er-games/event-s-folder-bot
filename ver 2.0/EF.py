@@ -17,6 +17,7 @@ from sql_EF import *
 from check_formats_EF import *
 from user_EF import User
 from export_EF import send_file
+from datetime_EF import get_datetime_now
 
 bot = telebot.TeleBot(event_reg_bot)
 users: dict[str, User] = {}  # format: [user id] - str: [current stage] - int
@@ -37,6 +38,10 @@ def queue_manager(message):
 
 def stage_manager(message):
     stage = users[str(message.from_user.id)].get_stage()
+    insert("sent_messages",
+           id=users[str(message.from_user.id)].get_id(),
+           message_text=message.text,
+           datetime=get_datetime_now())
     if stage == 0 and message.text == "/start":
         start(message)
     elif message.text == "/admin":

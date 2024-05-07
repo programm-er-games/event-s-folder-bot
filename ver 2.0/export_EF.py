@@ -10,7 +10,7 @@ system = os.name
 
 def _export_to_xlsx():
     try:
-        path = "C:\\temp\\" if system == "nt" else "~/tg-bots/temp/"
+        path = "C:\\temp\\" if system == "nt" else "/home/orangepi/tg-bots/temp/"
         try:
             if system == "nt":
                 os.mkdir(path)
@@ -61,10 +61,10 @@ def send_file(bot, user_id):
             file = open(path, "rb")
             bot.send_document(user_id, file)
             file.close()
-            os.system(f"rm \"{path}\"")
             folder = path.split("/")
             folder = folder[0:-1:1]
             folder = "/".join(folder)
+            os.system(f"rm -i -f {path}")
             os.system("rmdir " + folder)
 
 

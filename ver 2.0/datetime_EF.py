@@ -1,7 +1,7 @@
 from datetime import datetime
 
 
-def get_datetime_now():
+def get_datetime_now() -> str:
     day = str(datetime.now().day)
     month = str(datetime.now().month)
     hour = str(datetime.now().hour)
