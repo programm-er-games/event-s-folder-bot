@@ -12,7 +12,10 @@ def _export_to_xlsx():
     try:
         path = "C:\\temp\\" if system == "nt" else "~/tg-bots/temp/"
         try:
-            os.mkdir(path)
+            if system == "nt":
+                os.mkdir(path)
+            elif system == "posix":
+                os.system(f"mkdir {path}")
         except OSError:
             pass
         cur_datetime = get_datetime_now().split(".", 2)
@@ -35,16 +38,22 @@ def send_file(bot, user_id):
     result, path = _export_to_xlsx()
     bot.send_message(user_id, "<b><u>" + result + "</u></b>", parse_mode='html')
     if path != "error":
-        file = open(path, "rb")
-        bot.send_document(user_id, file)
-        file.close()
         if system == "nt":
+            file = open(path, "rb")
+            bot.send_document(user_id, file)
+            file.close()
             os.remove(f"\"{path}\"")
             folder = path.split("\\")
             folder = folder[0:-1:1]
             folder = "\\".join(folder)
             os.rmdir(f"\"{folder}\"")
         elif system == "posix":
+            path = path.split("/")
+            path[len(path) - 1] = "\"" + path[len(path) - 1] + "\""
+            path = "/".join(path)
+            file = open(path, "rb")
+            bot.send_document(user_id, file)
+            file.close()
             os.system(f"rm \"{path}\"")
             folder = path.split("/")
             folder = folder[0:-1:1]
