@@ -50,6 +50,9 @@ def check_tables():
 
 def insert(table: str, **kwargs):
     rq = "INSERT INTO " + table + " ("
+    to_print = ""
+    if "id" in kwargs.keys():
+        to_print = kwargs["id"]
     for i in kwargs.keys():
         rq += i + ", "
     rq = rq[0:-2]
@@ -61,7 +64,10 @@ def insert(table: str, **kwargs):
             rq += str(kwargs[i]) + ", "
     rq = rq[0:-2]
     rq += ")"
-    cur.execute(rq)
+    try:
+        cur.execute(rq)
+    except sqlite3.IntegrityError:
+        print(f"Пользователь с id {to_print} уже существует!")
     conn.commit()
 
 
@@ -127,10 +133,6 @@ def delete(table: str, **kwargs):
     cur.execute(rq)
     conn.commit()
 
-# def test():
-#     print(", ".join(["name", "fgh"]))
-
 
 if __name__ == '__main__':
-    # test()
     raise SystemError("Этот файл не должен запускаться как основной скрипт!")

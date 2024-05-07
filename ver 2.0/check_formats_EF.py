@@ -95,6 +95,14 @@ def check_phone_format(checkstring: str):
     return result
 
 
+def check_initials_format(checkstring: str):
+    check = checkstring.split(" ")
+    if len(check) == 3 or len(check) == 2:
+        return checkstring
+    else:
+        return "error"
+
+
 if __name__ == '__main__':
     # print(check_birth_date_format("30 12 2005") + " - должно быть неверно")
     # print(check_birth_date_format("32.12.2005") + " - должно быть верно, но нет")

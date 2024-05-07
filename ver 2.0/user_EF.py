@@ -47,8 +47,6 @@ class User:
         else:
             print("Event excepted")
 
-    def set_message_id(self, event_list_id: int): self._event_list_id = event_list_id
-
     def set_event(self, event: str):
         self._event = event
         if self._event != "":
@@ -61,6 +59,17 @@ class User:
         # clear question's data
         for i in ["question", "type", "name"]:
             self._current_question[i] = ""
+
+    def set_temp_value(self, key: str, value):
+        if "temp" not in self._user_info.keys():
+            self._user_info["temp"] = {}
+        self._user_info["temp"][key] = value
+
+    def get_temp_value(self, key: str):
+        if key in self._user_info["temp"].keys():
+            return self._user_info["temp"][key]
+        else:
+            return False
 
     def get_question(self) -> str:
         self._qst_counter += 1
@@ -89,6 +98,8 @@ class User:
 
     def __del__(self):
         other_info = ""
+        if "temp" in self._user_info.keys():
+            del self._user_info["temp"]
         keys = self._user_info.keys()
         keys = list(keys)[5:]
         for i in keys:
