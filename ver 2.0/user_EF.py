@@ -34,6 +34,7 @@ class User:
         }
         self._qst_counter = 0
         self._qst_number = 0
+        self._is_initials = False
 
     def next_stage(self, to: int = -2):
         if to == -2:
@@ -55,10 +56,18 @@ class User:
     def set_list_id(self, event_list_id: int): self._event_list_id = event_list_id
 
     def set_answer(self, answer: str):
-        self._user_info[self._current_question["name"]] = answer
+        if self._is_initials:
+            initials = answer.split(" ")
+            self._user_info["name"] = initials[0]
+            self._user_info["surname"] = initials[1]
+            self._user_info["patronymic"] = initials[2]
+            self._is_initials = False
+        else:
+            self._user_info[self._current_question["name"]] = answer
         # clear question's data
         for i in ["question", "type", "name"]:
             self._current_question[i] = ""
+
 
     def set_temp_value(self, key: str, value):
         if "temp" not in self._user_info.keys():
@@ -79,6 +88,7 @@ class User:
             if len(qst[0]) != 0:
                 self._current_question["question"] = qst[0][0]
                 self._current_question["type"] = qst[0][1]
+                self._is_initials = True if qst[0][1] == "initials" else False
                 self._is_need_to_check = False if qst[0][1] == "text" or qst[0][1] == "integer" else True
                 self._current_question["name"] = qst[0][2]
         else:
@@ -103,7 +113,7 @@ class User:
         keys = self._user_info.keys()
         keys = list(keys)[5:]
         for i in keys:
-            other_info += i + " = " + str(self._user_info[i]) + "; "
+            other_info += i + " = " + str(self._user_info[i]) + ";\n "
         other_info = other_info[0:-2]
         insert("participants",
                id=int(self._user_info["id"]),
