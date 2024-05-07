@@ -5,27 +5,30 @@ import os
 from datetime_EF import get_datetime_now
 
 
+system = os.name
+
+
 def _export_to_xlsx():
-    # try:
-    path = "C:\\temp"
     try:
-        os.mkdir(path)
-    except OSError:
-        pass
-    cur_datetime = get_datetime_now().split(".", 2)
-    temp = "-".join(cur_datetime)
-    cur_datetime = temp.split(":", 2)
-    cur_datetime = "-".join(cur_datetime)
-    name = f"event_register export {cur_datetime}.xlsx"
-    connect = sqlite3.connect("event_register.db", check_same_thread=False)
-    with pandas.ExcelWriter(path + name) as f:
-        for i in ["events", "participants", "questions", "sent_messages"]:
-            data_file = pandas.read_sql(f'SELECT * FROM {i}', connect)
-            data_file.to_excel(f, sheet_name=i, na_rep="--")
-    return "Успешно!", path + name
-    # except Exception as e:
-    #     print(e)
-    #     return "Что-то пошло не так!", "error"
+        path = "C:\\temp\\" if system == "nt" else "~/tg-bots/temp/"
+        try:
+            os.mkdir(path)
+        except OSError:
+            pass
+        cur_datetime = get_datetime_now().split(".", 2)
+        temp = "-".join(cur_datetime)
+        cur_datetime = temp.split(":", 2)
+        cur_datetime = "-".join(cur_datetime)
+        name = f"event_register export {cur_datetime}.xlsx"
+        connect = sqlite3.connect("event_register.db", check_same_thread=False)
+        with pandas.ExcelWriter(path + name) as f:
+            for i in ["events", "participants", "questions", "sent_messages"]:
+                data_file = pandas.read_sql(f'SELECT * FROM {i}', connect)
+                data_file.to_excel(f, sheet_name=i, na_rep="--")
+        return "Успешно!", path + name
+    except Exception as e:
+        print(e)
+        return "Что-то пошло не так!", "error"
 
 
 def send_file(bot, user_id):
@@ -35,11 +38,18 @@ def send_file(bot, user_id):
         file = open(path, "rb")
         bot.send_document(user_id, file)
         file.close()
-        os.remove(path)
-        folder = path.split("\\")
-        folder = folder[0:-1:1]
-        folder = "\\".join(folder)
-        os.rmdir(folder)
+        if system == "nt":
+            os.remove(f"\"{path}\"")
+            folder = path.split("\\")
+            folder = folder[0:-1:1]
+            folder = "\\".join(folder)
+            os.rmdir(f"\"{folder}\"")
+        elif system == "posix":
+            os.system(f"rm \"{path}\"")
+            folder = path.split("/")
+            folder = folder[0:-1:1]
+            folder = "/".join(folder)
+            os.system("rmdir " + folder)
 
 
 if __name__ == '__main__':
