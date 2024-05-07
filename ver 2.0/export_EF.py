@@ -18,11 +18,21 @@ def _export_to_xlsx():
                 os.system(f"mkdir {path}")
         except OSError:
             pass
-        cur_datetime = get_datetime_now().split(".", 2)
-        temp = "-".join(cur_datetime)
-        cur_datetime = temp.split(":", 2)
-        cur_datetime = "-".join(cur_datetime)
-        name = f"event_register export {cur_datetime}.xlsx"
+        name = ""
+        if system == "nt":
+            cur_datetime = get_datetime_now().split(".", 2)
+            temp = "-".join(cur_datetime)
+            cur_datetime = temp.split(":", 2)
+            cur_datetime = "-".join(cur_datetime)
+            name = f"event_register export {cur_datetime}.xlsx"
+        elif system == "posix":
+            cur_datetime = get_datetime_now().split(".", 2)
+            cur_datetime = "-".join(cur_datetime)
+            cur_datetime = cur_datetime.split(":", 2)
+            cur_datetime = "-".join(cur_datetime)
+            cur_datetime = cur_datetime.split(", ")
+            cur_datetime = "_".join(cur_datetime)
+            name = f"export_{cur_datetime}.xlsx"
         connect = sqlite3.connect("event_register.db", check_same_thread=False)
         with pandas.ExcelWriter(path + name) as f:
             for i in ["events", "participants", "questions", "sent_messages"]:
@@ -48,9 +58,6 @@ def send_file(bot, user_id):
             folder = "\\".join(folder)
             os.rmdir(f"\"{folder}\"")
         elif system == "posix":
-            path = path.split("/")
-            path[len(path) - 1] = "\"" + path[len(path) - 1] + "\""
-            path = "/".join(path)
             file = open(path, "rb")
             bot.send_document(user_id, file)
             file.close()
