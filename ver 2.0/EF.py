@@ -83,7 +83,7 @@ def out_stage(message):
         match out_type[0][0]:
             case "email":
                 result = check_email_format(message.text)
-            case "birth":
+            case "birth_date":
                 result = check_birth_date_format(message.text)
             case "integer":
                 result = check_integer_format(message.text)
@@ -97,6 +97,7 @@ def out_stage(message):
                 text = (f"Формат данных {out_type[0][0]} неверный.\n"
                         "Пожалуйста, напишите их так, как указано в Вашем паспорте")
         if result == message.text:
+            users[user_id].set_answer(message.text)
             users[user_id].next_stage()
             in_stage(user_id)
         else:
