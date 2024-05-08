@@ -3,7 +3,7 @@ eng_alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k",
                 "w", "x", "y", "z"]
 
 
-def check_email_format(checkstring: str):
+def check_email_format(checkstring: str) -> str:
     """
         Returns True, if email from message complies with the standards, else False
     """
@@ -29,7 +29,7 @@ def check_email_format(checkstring: str):
         return "error"
 
 
-def check_birth_date_format(checkstring: str):
+def check_birth_date_format(checkstring: str) -> str:
     from datetime import datetime
     current_year = datetime.now().year
     temp = checkstring.split(".")
@@ -53,7 +53,7 @@ def check_birth_date_format(checkstring: str):
         return "error"
 
 
-def check_integer_format(checkstring: str):
+def check_integer_format(checkstring: str) -> str:
     result = ""
     try:
         result = int(checkstring)
@@ -64,7 +64,7 @@ def check_integer_format(checkstring: str):
     return result
 
 
-def check_phone_format(checkstring: str):
+def check_phone_format(checkstring: str) -> str:
     temp = checkstring.split("-")
     is_all_right = True
     is_number = False
@@ -95,12 +95,18 @@ def check_phone_format(checkstring: str):
     return result
 
 
-def check_initials_format(checkstring: str):
+def check_initials_format(checkstring: str) -> str:
     check = checkstring.split(" ")
     if len(check) == 3 or len(check) == 2:
         return checkstring
     else:
         return "error"
+
+
+def check_event_info_format(to_check: list[str]) -> str:
+    raise Warning("Function \"check_event_info_format\" in development!")
+    # for i in to_check:
+    #     ...
 
 
 if __name__ == '__main__':

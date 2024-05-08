@@ -121,7 +121,7 @@ def update(table: str, columns: dict[str, Any], **kwargs):
     conn.commit()
 
 
-def delete(table: str, **kwargs):
+def delete_cond(table: str, **kwargs):
     rq = "DELETE FROM " + table + " WHERE "
     for i in kwargs.keys():
         rq += i
@@ -132,6 +132,14 @@ def delete(table: str, **kwargs):
     rq = rq[0:-5]
     cur.execute(rq)
     conn.commit()
+
+
+def delete_all(table: str, *args: str):
+    rq = "DELETE FROM " + table + " "
+    for i in args:
+        rq += i + ", "
+    rq = rq[0:-2]
+    cur.execute(rq)
 
 
 if __name__ == '__main__':

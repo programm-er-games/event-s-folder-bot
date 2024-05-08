@@ -8,6 +8,8 @@
 #  хочет ли он записаться на другое/ещё одно мероприятие,
 #  хочет ли он отменить заявку на мероприятие/(я)
 #  )
+# TODO: добавить возможность сортировки выводимых данных через "аргументы" команд
+# TODO: добавить возможность добавления условий для удаления через "аргументы" команд
 import telebot
 from telebot import types
 from telebot.util import smart_split
@@ -122,73 +124,108 @@ def admin(message):
                     "Другие доступные команды можно просмотреть командой /ahelp")
             bot.send_message(message.from_user.id, text, parse_mode='html')
     if users[str(message.from_user.id)].get_temp_value("admin"):
-        match stage:
-            case -4:
-                match message.text:
-                    case "/export":
-                        send_file(bot, message.from_user.id)
-                    case "/add_event":
-                        text = "Для добавления реального мероприятия скопируйте сообщение-форму, " \
-                               "которое сейчас будет выслано, вставьте в поле для ввода сообщений " \
-                               "и \"заполните\" её соответственно полям (без запятых после значений)"
-                        bot.send_message(message.from_user.id, text, parse_mode='html')
-                        text = "<b>Название:</b> \n" \
-                               "<b>Описание:</b> \n" \
-                               "<b>Начало проведения:</b> \n" \
-                               "<b>Конец проведения:</b> \n" \
-                               "<b>Контакты:</b> \n" \
-                               "<b>Адрес проведения:</b> "
-                        bot.send_message(message.from_user.id, text, parse_mode='html')
-                        users[str(message.from_user.id)].set_temp_value("admin_stage", "/add_event")
-                    # case "/delev":
-                    #     ...
-                    # case "/delpa":
-                    #     ...
-                    # case "/delqs":
-                    #     ...
-                    # case "/delse":
-                    #     ...
-                    case "/prev":
-                        data = search_all("events", "*")
-                        text = "Вот список таблицы <b>events</b>:\n\n"
-                        counter = 1
-                        for rows in data:
-                            text += f" {counter}."
-                            text += f"   Имя мероприятия: <u>{rows[0]}</u>\n"
-                            text += f"   Описание:\n{rows[1]}\n"
-                            text += f"   Дата проведения: {rows[2]} - {rows[3]},\n"
-                            text += f"   Адрес проведения: {rows[5]},\n"
-                            text += f"   Контакты:\n{rows[4]}\n"
-                            counter += 1
-
-                    case "/prpa":
-                        ...
-                    case "/prqs":
-                        ...
-                    case "/ahelp":
-                        text = ("Доступные команды:\n\n\n"
-                                "    <u>/ahelp</u> - admin help - показывает список команд, доступных "
-                                "ТОЛЬКО в режиме разработчика;\n\n"
-                                "    <u>/add_event</u> - добавляет мероприятие в таблицу events в БД;\n\n"
-                                # "    <u>/delev</u> - очищает таблицу events в БД;\n\n"
-                                # "    <u>/delpa</u> - очищает таблицу participants в БД;\n\n"
-                                # "    <u>/delqs</u> - очищает таблицу questions в БД;\n\n"
-                                # "    <u>/delse</u> - очищает таблицу sent_messages в БД;\n\n"
-                                "    <u>/prpa</u> - выводит данные таблицы participants из БД;\n\n"
-                                "    <u>/prev</u> - выводит данные таблицы events из БД;\n\n"
-                                "    <u>/prqs</u> - выводит данные таблицы questions из БД;\n\n"
-                                "    <u>/export</u> - производит экспорт данных в Excel-файл "
-                                "и присылает результат отдельным сообщением;\n\n"
-                                "    <u>/!admin</u> - выход из режима разработчика "
-                                "с возвращением на тот этап программы/сценария, на котором была вызвана "
-                                "команда /admin.\n\n\n"
-                                "Будьте осторожны! <b>Нерациональное использование команд может "
-                                "повлиять на работу всего сценария!</b>")
-                        bot.send_message(message.from_user.id, text, parse_mode='html')
-                    case "/!admin":
-                        bot.send_message(message.from_user.id, "Вы вышли из режима разработчика!")
-                        back_to = users[str(message.from_user.id)].get_temp_value("stage")
-                        users[str(message.from_user.id)].next_stage(back_to)
+        if stage == -4:
+            match message.text:
+                case "/export":
+                    send_file(bot, message.from_user.id)
+                # case "/add_event":
+                #     text = "Для добавления реального мероприятия скопируйте сообщение-форму, " \
+                #            "которое сейчас будет выслано, вставьте в поле для ввода сообщений " \
+                #            "и \"заполните\" её соответственно полям (без запятых после значений)"
+                #     bot.send_message(message.from_user.id, text, parse_mode='html')
+                #     text = "<b>Название:</b> \n" \
+                #            "<b>Описание:</b> \n" \
+                #            "<b>Начало проведения:</b> \n" \
+                #            "<b>Конец проведения:</b> \n" \
+                #            "<b>Контакты:</b> \n" \
+                #            "<b>Адрес проведения:</b> "
+                #     bot.send_message(message.from_user.id, text, parse_mode='html')
+                #     users[str(message.from_user.id)].set_temp_value("admin_stage", "/add_event")
+                #     users[str(message.from_user.id)].next_stage(-5)
+                # case "/delev":
+                #     ...
+                # case "/delpa":
+                #     ...
+                # case "/delqs":
+                #     ...
+                case "/delse":
+                    delete_all("sent_messages", "*")
+                case "/prev":
+                    data = search_all("events", "*")
+                    text = "Вот список таблицы <b>events</b>:\n\n"
+                    counter = 1
+                    for rows in data:
+                        text += f" {counter}.\n"
+                        text += f"   Имя мероприятия: <u>{rows[0]}</u>\n"
+                        text += f"   Описание:\n{rows[1]}\n"
+                        text += f"   Дата проведения: {rows[2]} - {rows[3]},\n"
+                        text += f"   Адрес проведения: {rows[5]},\n"
+                        text += f"   Контакты:\n{rows[4]}\n"
+                        text += f"   Дата добавления мероприятия: {rows[6]}"
+                        counter += 1
+                    del counter
+                case "/prpa":
+                    data = search_all("participants", "*")
+                    text = "Вот список таблицы <b>participants</b>:\n\n"
+                    counter = 1
+                    for rows in data:
+                        text += f" {counter}.\n"
+                        text += f"   ID пользователя: {rows[0]}\n"
+                        text += f"   Имя пользователя: {rows[1]}\n"
+                        text += f"   ФИО: {rows[2]} {rows[3]} {rows[4]}\n"
+                        text += f"   Участник мероприятия: {rows[5]}\n"
+                        text += f"   Другая информация:\n"
+                        temp = ""
+                        for i in rows[6]:
+                            temp += i
+                            if i == "\n":
+                                text += f"     {temp}"
+                                temp = ""
+                        del temp
+                        text += f"\n   Дата добавления участника: {rows[7]}"
+                        counter += 1
+                    del counter
+                case "/prqs":
+                    events_data = search_all("questions", "events")
+                    text = "Вот список таблицы <b>questions</b>, отсортированный по мероприятиям:\n\n"
+                    counter = 1
+                    for i in events_data:
+                        data = search_cond("questions",
+                                           ["id", "question", "output_type", "output_name"],
+                                           events_data=i[0])
+                        text += f" {counter}. {i[0]}"
+                        text += f"   Порядковый номер вопроса: {data[0][0]}"
+                        text += f"   Вопрос: {data[0][1]}"
+                        text += f"   Тип ответа на вопрос: {data[0][2]}"
+                        text += f"   Предмет вопроса: {data[0][3]}"
+                case "/ahelp":
+                    text = ("Доступные команды:\n\n\n"
+                            "    <u>/ahelp</u> - admin help - показывает список команд, доступных "
+                            "ТОЛЬКО в режиме разработчика;\n\n"
+                            # "    <u>/add_event</u> - добавляет мероприятие в таблицу events в БД;\n\n"
+                            # "    <u>/delev</u> - очищает таблицу events в БД;\n\n"
+                            # "    <u>/delpa</u> - очищает таблицу participants в БД;\n\n"
+                            # "    <u>/delqs</u> - очищает таблицу questions в БД;\n\n"
+                            "    <u>/delse</u> - очищает таблицу sent_messages в БД;\n\n"
+                            "    <u>/prpa</u> - выводит данные таблицы participants из БД;\n\n"
+                            "    <u>/prev</u> - выводит данные таблицы events из БД;\n\n"
+                            "    <u>/prqs</u> - выводит данные таблицы questions из БД;\n\n"
+                            "    <u>/export</u> - производит экспорт данных в Excel-файл "
+                            "и присылает результат отдельным сообщением;\n\n"
+                            "    <u>/!admin</u> - выход из режима разработчика "
+                            "с возвращением на тот этап программы/сценария, на котором была вызвана "
+                            "команда /admin.\n\n\n"
+                            "Будьте осторожны! <b>Нерациональное использование команд может "
+                            "повлиять на работу всего сценария!</b>")
+                    bot.send_message(message.from_user.id, text, parse_mode='html')
+                case "/!admin":
+                    bot.send_message(message.from_user.id, "Вы вышли из режима разработчика!")
+                    back_to = users[str(message.from_user.id)].get_temp_value("stage")
+                    users[str(message.from_user.id)].next_stage(back_to)
+        elif stage == -5 and users[str(message.from_user.id)].get_temp_value("admin_stage") == "/add_event":
+            temp = message.text.split("\n")
+            check_event_info_format(temp)
+            bot.send_message(message.from_user.id, "Эту функцию пока нельзя использовать!")
 
 
 @bot.callback_query_handler(func=lambda c: isinstance(c.data, int) and 1 <= c.data)
