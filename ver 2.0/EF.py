@@ -339,8 +339,8 @@ def verify_no(callback: types.CallbackQuery):
         if callback.data == "no":
             text = "Ну, на нет - и суда нет. До свидания!"
             bot.send_message(callback.from_user.id, text, reply_markup=types.ReplyKeyboardRemove())
-            users[user_id].__del__(False)
-            print(users)
+            users[user_id].clear_user(False)
+            # print(users)
         elif callback.data == "ch_no":
             users[user_id].set_event("")
             bot.edit_message_text(events_text[0], user_id, users[user_id].get_list_id(),
@@ -421,7 +421,7 @@ def end(user_id: str):
         contacts += i if not i.endswith(",") else i[0:-1]
     text += f"Если будут вопросы и/или пожелания, то обращайтесь по этим контактам:\n{contacts}"
     bot.send_message(user_id, text)
-    users[user_id].__del__(True)
+    users[user_id].clear_user(True)
 
 
 if __name__ == '__main__':

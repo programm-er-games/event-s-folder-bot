@@ -105,7 +105,7 @@ class User:
 
     def get_list_id(self) -> int: return self._event_list_id
 
-    def __del__(self, is_finished: bool):
+    def clear_user(self, is_finished: bool):
         if is_finished:
             other_info = ""
             if "temp" in self._user_info.keys():
