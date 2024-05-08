@@ -103,10 +103,21 @@ def check_initials_format(checkstring: str) -> str:
         return "error"
 
 
-def check_event_info_format(to_check: list[str]) -> str:
-    raise Warning("Function \"check_event_info_format\" in development!")
-    # for i in to_check:
-    #     ...
+def check_event_info_format(to_check: str) -> dict[str, str] | str:
+    result: dict[str, str] = {"": ""}
+    del result[""]
+    if "\n" in to_check:
+        rows = to_check.split("\n")
+        counter = 0
+        for i in ["name", "description", "date_start", "date_end", "contacts", "address"]:
+            temp = rows[counter].split(":")
+            if len(temp) > 1:
+                try:
+                    result[i] = temp[1][1:] if temp[1].startswith(" ") else temp[1]
+                except IndexError as e:
+                    print(e)
+                    return "error"
+    return result
 
 
 if __name__ == '__main__':

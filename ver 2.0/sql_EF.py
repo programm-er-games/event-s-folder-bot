@@ -50,9 +50,13 @@ def check_tables():
 
 def insert(table: str, **kwargs):
     rq = "INSERT INTO " + table + " ("
-    to_print = ""
+    to_print = {}
     if "id" in kwargs.keys():
-        to_print = kwargs["id"]
+        to_print[0] = "id"
+        to_print[1] = kwargs["id"]
+    elif "name" in kwargs.keys():
+        to_print[0] = "name"
+        to_print[1] = kwargs["name"]
     for i in kwargs.keys():
         rq += i + ", "
     rq = rq[0:-2]
@@ -67,7 +71,7 @@ def insert(table: str, **kwargs):
     try:
         cur.execute(rq)
     except sqlite3.IntegrityError:
-        print(f"Пользователь с id {to_print} уже существует!")
+        print(f"Пользователь с {to_print[0]} {to_print[1]} в таблице {table} уже существует!")
     conn.commit()
 
 

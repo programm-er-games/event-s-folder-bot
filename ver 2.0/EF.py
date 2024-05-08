@@ -20,11 +20,14 @@ from check_formats_EF import *
 from user_EF import User
 from export_EF import send_file
 from datetime_EF import get_datetime_now
+from mail_EF import Mail
+
 
 bot = telebot.TeleBot(event_reg_bot)
 users: dict[str, User] = {}  # format: [user id] - str: [current stage] - int
 event_dict: dict[int, str] = {}  # format: [event id] - int: [event name] - str
 events_text = []
+mail_handler = False
 
 
 # ----------------------------------------------------------------------------
@@ -55,6 +58,20 @@ def stage_manager(message):
         out_stage(message)
     if stage <= -3:
         admin(message)
+
+
+# ------------------------------------------------------------------------------------------
+
+
+def open_mail():
+    global mail_handler
+    mail_handler = Mail()
+    mail_handler.set_recipient("Developer")
+
+
+def close_mail():
+    global mail_handler
+    del mail_handler
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -110,38 +127,64 @@ def out_stage(message):
 
 
 def admin(message):
-    global users
-    stage = users[str(message.from_user.id)].get_stage()
-    if stage == -3:
-        if message.text == "/admin":
-            text = "Если Вы разработчик или доверенное лицо, то введите специальный код"
+    global users, mail_handler
+    current_user = users[str(message.from_user.id)]
+    curr_stage = current_user.get_stage()
+    if curr_stage == -3:
+        if message.text == "/admin" and current_user.get_temp_value("admin") is False:
+            text = "Если Вы разработчик или доверенное лицо, то введите специальный код, высланный на почту"
+            open_mail()
+            mail_handler.send_code()
+            # bot.send_message(message.from_user.id, "Код выслан. Извините за задержку.")
             bot.send_message(message.from_user.id, text, parse_mode='html')
-        elif message.text == "3056":
-            users[str(message.from_user.id)].set_temp_value("admin", True)
-            users[str(message.from_user.id)].next_stage(-4)
-            text = ("<b>Всё верно!</b>\n"
-                    "Экспортировать данные из базы данных можно командой /export\n"
-                    "Другие доступные команды можно просмотреть командой /ahelp")
-            bot.send_message(message.from_user.id, text, parse_mode='html')
-    if users[str(message.from_user.id)].get_temp_value("admin"):
-        if stage == -4:
+            current_user.set_temp_value("tries_counter", 3)
+        else:
+            if mail_handler.check_code(message.text):
+                current_user.set_temp_value("admin", True)
+                text = ("<b>Всё верно!</b>\n"
+                        "Экспортировать данные из базы данных можно командой /export\n"
+                        "Другие доступные команды можно просмотреть командой /ahelp")
+                bot.send_message(message.from_user.id, text, parse_mode='html')
+                current_user.next_stage(-4)
+            else:
+                current_user.set_temp_value(
+                    "tries_counter",
+                    current_user.get_temp_value("tries_counter") - 1
+                )
+                current_user.set_temp_value("admin", False)
+                if current_user.get_temp_value("tries_counter") > 0:
+                    text = ("<b>Неверно!</b>\n"
+                            f"У Вас осталось попыток для подтверждения: "
+                            f"{current_user.get_temp_value('tries_counter')}!")
+                    bot.send_message(message.from_user.id, text, parse_mode='html')
+                    current_user.next_stage(-4)
+                else:
+                    text = ("<b>Неверно!</b>\n"
+                            "Вы исчерпали все свои попытки! Вы не являетесь доверенным лицом "
+                            "и не имеете доступа к данной команде!\n"
+                            "<b>Возврат к последнему этапу...</b>")
+                    back_to = current_user.get_temp_value("stage")
+                    current_user.next_stage(back_to)
+                    bot.send_message(message.from_user.id, text, parse_mode='html')
+    elif curr_stage == -4 and current_user.get_temp_value("admin"):
+        stage = current_user.get_temp_value("admin_stage")
+        if stage is False or stage == "":
             match message.text:
                 case "/export":
                     send_file(bot, message.from_user.id)
-                # case "/add_event":
-                #     text = "Для добавления реального мероприятия скопируйте сообщение-форму, " \
-                #            "которое сейчас будет выслано, вставьте в поле для ввода сообщений " \
-                #            "и \"заполните\" её соответственно полям (без запятых после значений)"
-                #     bot.send_message(message.from_user.id, text, parse_mode='html')
-                #     text = "<b>Название:</b> \n" \
-                #            "<b>Описание:</b> \n" \
-                #            "<b>Начало проведения:</b> \n" \
-                #            "<b>Конец проведения:</b> \n" \
-                #            "<b>Контакты:</b> \n" \
-                #            "<b>Адрес проведения:</b> "
-                #     bot.send_message(message.from_user.id, text, parse_mode='html')
-                #     users[str(message.from_user.id)].set_temp_value("admin_stage", "/add_event")
-                #     users[str(message.from_user.id)].next_stage(-5)
+                case "/add_event":
+                    text = "Для добавления реального мероприятия скопируйте сообщение-форму, " \
+                           "которое сейчас будет выслано, вставьте в поле для ввода сообщений " \
+                           "и \"заполните\" её соответственно полям (без запятых после значений)"
+                    bot.send_message(message.from_user.id, text, parse_mode='html')
+                    text = "<b>Название:</b> \n" \
+                           "<b>Описание:</b> \n" \
+                           "<b>Начало проведения:</b> \n" \
+                           "<b>Конец проведения:</b> \n" \
+                           "<b>Контакты:</b> \n" \
+                           "<b>Адрес проведения:</b> "
+                    bot.send_message(message.from_user.id, text, parse_mode='html')
+                    current_user.set_temp_value("admin_stage", "/add_event")
                 # case "/delev":
                 #     ...
                 # case "/delpa":
@@ -150,6 +193,7 @@ def admin(message):
                 #     ...
                 case "/delse":
                     delete_all("sent_messages", "*")
+                    current_user.set_temp_value("admin_stage", "")
                 case "/prev":
                     data = search_all("events", "*")
                     text = "Вот список таблицы <b>events</b>:\n\n"
@@ -163,7 +207,9 @@ def admin(message):
                         text += f"   Контакты:\n{rows[4]}\n"
                         text += f"   Дата добавления мероприятия: {rows[6]}"
                         counter += 1
-                    del counter
+                    bot.send_message(message.from_user.id, text, parse_mode='html')
+                    current_user.set_temp_value("admin_stage", "")
+                    del counter, text
                 case "/prpa":
                     data = search_all("participants", "*")
                     text = "Вот список таблицы <b>participants</b>:\n\n"
@@ -178,38 +224,43 @@ def admin(message):
                         temp = ""
                         for i in rows[6]:
                             temp += i
-                            if i == "\n":
-                                text += f"     {temp}"
-                                temp = ""
+                            text += f"     {temp}"
+                            temp = ""
                         del temp
                         text += f"\n   Дата добавления участника: {rows[7]}"
                         counter += 1
-                    del counter
-                case "/prqs":
-                    events_data = search_all("questions", "events")
-                    text = "Вот список таблицы <b>questions</b>, отсортированный по мероприятиям:\n\n"
-                    counter = 1
-                    for i in events_data:
-                        data = search_cond("questions",
-                                           ["id", "question", "output_type", "output_name"],
-                                           events_data=i[0])
-                        text += f" {counter}. {i[0]}"
-                        text += f"   Порядковый номер вопроса: {data[0][0]}"
-                        text += f"   Вопрос: {data[0][1]}"
-                        text += f"   Тип ответа на вопрос: {data[0][2]}"
-                        text += f"   Предмет вопроса: {data[0][3]}"
+                    bot.send_message(message.from_user.id, text, parse_mode='html')
+                    current_user.set_temp_value("admin_stage", "")
+                    del counter, text, data
+                # case "/prqs":
+                #     events_data = search_all("questions", "event")
+                #     text = "Вот список таблицы <b>questions</b>, отсортированный по мероприятиям:\n\n"
+                #     counter = 1
+                #     for i in events_data:
+                #         data = search_cond("questions",
+                #                            ["id", "question", "output_type", "output_name"],
+                #                            event=i[0], id=counter)
+                #         text += f" {counter}. {i[0]}\n"
+                #         text += f"   Порядковый номер вопроса: {data[0]}\n"
+                #         text += f"   Вопрос: {data[1]}\n"
+                #         text += f"   Тип ответа на вопрос: {data[2]}\n"
+                #         text += f"   Предмет вопроса: {data[3]}\n"
+                #         counter += 1
+                #     bot.send_message(message.from_user.id, text, parse_mode='html')
+                #     current_user.set_temp_value("admin_stage", "")
+                #     del counter, text, events_data
                 case "/ahelp":
                     text = ("Доступные команды:\n\n\n"
                             "    <u>/ahelp</u> - admin help - показывает список команд, доступных "
                             "ТОЛЬКО в режиме разработчика;\n\n"
-                            # "    <u>/add_event</u> - добавляет мероприятие в таблицу events в БД;\n\n"
+                            "    <u>/add_event</u> - добавляет мероприятие в таблицу events в БД;\n\n"
                             # "    <u>/delev</u> - очищает таблицу events в БД;\n\n"
                             # "    <u>/delpa</u> - очищает таблицу participants в БД;\n\n"
                             # "    <u>/delqs</u> - очищает таблицу questions в БД;\n\n"
                             "    <u>/delse</u> - очищает таблицу sent_messages в БД;\n\n"
                             "    <u>/prpa</u> - выводит данные таблицы participants из БД;\n\n"
                             "    <u>/prev</u> - выводит данные таблицы events из БД;\n\n"
-                            "    <u>/prqs</u> - выводит данные таблицы questions из БД;\n\n"
+                            # "    <u>/prqs</u> - выводит данные таблицы questions из БД;\n\n"
                             "    <u>/export</u> - производит экспорт данных в Excel-файл "
                             "и присылает результат отдельным сообщением;\n\n"
                             "    <u>/!admin</u> - выход из режима разработчика "
@@ -218,14 +269,36 @@ def admin(message):
                             "Будьте осторожны! <b>Нерациональное использование команд может "
                             "повлиять на работу всего сценария!</b>")
                     bot.send_message(message.from_user.id, text, parse_mode='html')
+                    current_user.set_temp_value("admin_stage", "")
+                    del text
                 case "/!admin":
-                    bot.send_message(message.from_user.id, "Вы вышли из режима разработчика!")
-                    back_to = users[str(message.from_user.id)].get_temp_value("stage")
-                    users[str(message.from_user.id)].next_stage(back_to)
-        elif stage == -5 and users[str(message.from_user.id)].get_temp_value("admin_stage") == "/add_event":
-            temp = message.text.split("\n")
-            check_event_info_format(temp)
-            bot.send_message(message.from_user.id, "Эту функцию пока нельзя использовать!")
+                    bot.send_message(message.from_user.id,
+                                     "Вы вышли из режима разработчика!\n"
+                                     "<b>Возврат к последнему этапу...</b>",
+                                     parse_mode='html')
+                    back_to = current_user.get_temp_value("stage")
+                    current_user.next_stage(back_to)
+        elif stage == "/add_event":
+            data = check_event_info_format(message.text)
+            if data == "error":
+                text = ("<b><u>Что-то пошло не так!</u></b>\n"
+                        "Проверьте ещё раз корректность оформления и заполнения самой формы!")
+                bot.send_message(message.from_user.id, text, parse_mode='html')
+                del text
+            else:
+                insert("events",
+                       name=data["name"],
+                       description=data["description"],
+                       date_start=data["date_start"],
+                       date_end=data["date_end"],
+                       contacts=data["contacts"],
+                       address=data["address"])
+                bot.send_message(message.from_user.id,
+                                 "<b>Мероприятие успешно записано в БД!</b>",
+                                 parse_mode='html')
+
+
+# -----------------------------------------------------------------------------------------
 
 
 @bot.callback_query_handler(func=lambda c: isinstance(c.data, int) and 1 <= c.data)
@@ -266,7 +339,8 @@ def verify_no(callback: types.CallbackQuery):
         if callback.data == "no":
             text = "Ну, на нет - и суда нет. До свидания!"
             bot.send_message(callback.from_user.id, text, reply_markup=types.ReplyKeyboardRemove())
-            del users[user_id]
+            users[user_id].__del__(False)
+            print(users)
         elif callback.data == "ch_no":
             users[user_id].set_event("")
             bot.edit_message_text(events_text[0], user_id, users[user_id].get_list_id(),
@@ -347,7 +421,7 @@ def end(user_id: str):
         contacts += i if not i.endswith(",") else i[0:-1]
     text += f"Если будут вопросы и/или пожелания, то обращайтесь по этим контактам:\n{contacts}"
     bot.send_message(user_id, text)
-    del users[user_id]
+    users[user_id].__del__(True)
 
 
 if __name__ == '__main__':

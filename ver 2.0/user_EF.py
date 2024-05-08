@@ -68,13 +68,12 @@ class User:
         for i in ["question", "type", "name"]:
             self._current_question[i] = ""
 
-
-    def set_temp_value(self, key: str, value):
+    def set_temp_value(self, key: str, value: Any):
         if "temp" not in self._user_info.keys():
             self._user_info["temp"] = {}
         self._user_info["temp"][key] = value
 
-    def get_temp_value(self, key: str):
+    def get_temp_value(self, key: str) -> Any | bool:
         if key in self._user_info["temp"].keys():
             return self._user_info["temp"][key]
         else:
@@ -106,22 +105,23 @@ class User:
 
     def get_list_id(self) -> int: return self._event_list_id
 
-    def __del__(self):
-        other_info = ""
-        if "temp" in self._user_info.keys():
-            del self._user_info["temp"]
-        keys = self._user_info.keys()
-        keys = list(keys)[5:]
-        for i in keys:
-            other_info += i + " = " + str(self._user_info[i]) + ";\n "
-        other_info = other_info[0:-2]
-        insert("participants",
-               id=int(self._user_info["id"]),
-               username=self._user_info["username"],
-               name=self._user_info["name"],
-               surname=self._user_info["surname"],
-               patronymic=self._user_info["patronymic"],
-               other_info=other_info,
-               event=self._event,
-               add_date=get_datetime_now())
+    def __del__(self, is_finished: bool):
+        if is_finished:
+            other_info = ""
+            if "temp" in self._user_info.keys():
+                del self._user_info["temp"]
+            keys = self._user_info.keys()
+            keys = list(keys)[5:]
+            for i in keys:
+                other_info += i + " = " + str(self._user_info[i]) + ";\n "
+            other_info = other_info[0:-2]
+            insert("participants",
+                   id=int(self._user_info["id"]),
+                   username=self._user_info["username"],
+                   name=self._user_info["name"],
+                   surname=self._user_info["surname"],
+                   patronymic=self._user_info["patronymic"],
+                   other_info=other_info,
+                   event=self._event,
+                   add_date=get_datetime_now())
         del self
