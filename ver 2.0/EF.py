@@ -66,12 +66,29 @@ def stage_manager(message):
 def open_mail():
     global mail_handler
     mail_handler = Mail()
-    mail_handler.set_recipient("Developer")
+    mail_handler.set_recipient("Right hand")
 
 
 def close_mail():
     global mail_handler
     del mail_handler
+
+
+# ----------------------------------------------------------------------------------------------------
+
+
+def translate(word: str):
+    translated_word = ""
+    match word:
+        case "email":
+            translated_word = "почтового ящика"
+        case "birth_date":
+            translated_word = "даты рождения"
+        case "integer":
+            translated_word = "целого числа"
+        case "initials":
+            translated_word = "инициалов"
+    return translated_word
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -110,10 +127,10 @@ def out_stage(message):
                 result = check_initials_format(message.text)
         match result:
             case "correct, but error":
-                text = (f"Формат данных {out_type[0][0]} верный, но значения недостоверны.\n"
+                text = (f"Формат данных {translate(out_type[0][0])} верный, но значения недостоверны.\n"
                         "Пожалуйста, напишите их так, как указано в Вашем паспорте")
             case "error":
-                text = (f"Формат данных {out_type[0][0]} неверный.\n"
+                text = (f"Формат данных {translate(out_type[0][0])} неверный.\n"
                         "Пожалуйста, напишите их так, как указано в Вашем паспорте")
         if result == message.text:
             users[user_id].set_answer(message.text)
@@ -135,7 +152,6 @@ def admin(message):
             text = "Если Вы разработчик или доверенное лицо, то введите специальный код, высланный на почту"
             open_mail()
             mail_handler.send_code()
-            # bot.send_message(message.from_user.id, "Код выслан. Извините за задержку.")
             bot.send_message(message.from_user.id, text, parse_mode='html')
             current_user.set_temp_value("tries_counter", 3)
         else:
@@ -339,7 +355,7 @@ def verify_no(callback: types.CallbackQuery):
         if callback.data == "no":
             text = "Ну, на нет - и суда нет. До свидания!"
             bot.send_message(callback.from_user.id, text, reply_markup=types.ReplyKeyboardRemove())
-            users[user_id].clear_user(False)
+            del users[user_id]
             # print(users)
         elif callback.data == "ch_no":
             users[user_id].set_event("")
@@ -421,7 +437,9 @@ def end(user_id: str):
         contacts += i if not i.endswith(",") else i[0:-1]
     text += f"Если будут вопросы и/или пожелания, то обращайтесь по этим контактам:\n{contacts}"
     bot.send_message(user_id, text)
-    users[user_id].clear_user(True)
+    users[user_id].add_user_to_db()
+    del users[user_id]
+    # print(users)
 
 
 if __name__ == '__main__':

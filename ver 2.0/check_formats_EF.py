@@ -7,26 +7,34 @@ def check_email_format(checkstring: str) -> str:
     """
         Returns True, if email from message complies with the standards, else False
     """
-    is_dog_detected = False
-    is_dot_detected = False  # переменная для обозначения наличия точки после наличия собаки
-    is_all_right = False
-    for symbol in checkstring:
-        if symbol in eng_alphabet or \
-                symbol.lower() in eng_alphabet or \
-                symbol == ".":
-            is_all_right = True
-        elif symbol == "@":
-            is_dog_detected = True
-        else:
-            is_all_right = False
-        if symbol == "." and is_dog_detected:
-            is_dot_detected = True
-        if not is_all_right:
-            break
-    if is_all_right and is_dog_detected and is_dot_detected:
-        return checkstring
+    # this variable is intended to check the email for the presence of elements required by the standard
+    for i in checkstring:
+        if i.lower() not in eng_alphabet and not i.isdigit() and i not in ["@", "_", "."]:
+            return "error"
+    check_list = {
+        "email_name": "",
+        "email_sep": "",
+        "domain_2": "",
+        "address_sep": "",
+        "domain_1": ""
+    }
+    st_1 = checkstring.split("@")
+    if len(st_1) == 2:
+        check_list["email_name"] = st_1[0]
+        check_list["email_sep"] = "@"
     else:
         return "error"
+    st_2 = st_1[1].split(".")
+    if len(st_2) == 2:
+        check_list["domain_2"] = st_2[0]
+        check_list["domain_1"] = st_2[1]
+        check_list["address_sep"] = "."
+    else:
+        return "error"
+    for i in check_list.keys():
+        if check_list[i] == "":
+            return "error"
+    return checkstring
 
 
 def check_birth_date_format(checkstring: str) -> str:
@@ -53,15 +61,7 @@ def check_birth_date_format(checkstring: str) -> str:
         return "error"
 
 
-def check_integer_format(checkstring: str) -> str:
-    result = ""
-    try:
-        result = int(checkstring)
-    except ValueError:
-        result = "error"
-    else:
-        result = checkstring
-    return result
+def check_integer_format(checkstring: str) -> str: return checkstring if checkstring.isdigit() else "error"
 
 
 def check_phone_format(checkstring: str) -> str:
@@ -97,10 +97,7 @@ def check_phone_format(checkstring: str) -> str:
 
 def check_initials_format(checkstring: str) -> str:
     check = checkstring.split(" ")
-    if len(check) == 3 or len(check) == 2:
-        return checkstring
-    else:
-        return "error"
+    return checkstring if len(check) in [2, 3] else "error"
 
 
 def check_event_info_format(to_check: str) -> dict[str, str] | str:
@@ -126,5 +123,9 @@ if __name__ == '__main__':
     # print(check_birth_date_format("31.13.2005") + " - должно быть верно, но нет")
     # print(check_birth_date_format("31.12.10000") + " - должно быть верно, но нет")
     # print(check_birth_date_format("10.12.2004") + " - должно быть всё верно")
+    # print(check_email_format("e") + " - должно быть неверно")
+    # print(check_email_format("@") + " - должно быть неверно")
+    # print(check_email_format("ert@") + " - должно быть неверно")
+    # print(check_email_format("ert@.d.s") + " - должно быть неверно")
+    # print(check_email_format("ert@d.d") + " - должно быть верно")
     raise SystemExit("Этот файл не должен запускаться как основной скрипт!")
-

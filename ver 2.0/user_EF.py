@@ -53,7 +53,8 @@ class User:
         if self._event != "":
             self._get_qst_number()
 
-    def set_list_id(self, event_list_id: int): self._event_list_id = event_list_id
+    def set_list_id(self, event_list_id: int):
+        self._event_list_id = event_list_id
 
     def set_answer(self, answer: str):
         if self._is_initials:
@@ -95,33 +96,36 @@ class User:
         # print(self._current_question)
         return self._current_question["question"]
 
-    def is_being_checked(self) -> bool: return True if self._current_question["type"] != "text" else False
+    def is_being_checked(self) -> bool:
+        return True if self._current_question["type"] != "text" else False
 
-    def get_stage(self) -> int: return self._stage
+    def get_stage(self) -> int:
+        return self._stage
 
-    def get_event(self) -> str: return self._event
+    def get_event(self) -> str:
+        return self._event
 
-    def get_id(self) -> str: return self._user_info["id"]
+    def get_id(self) -> str:
+        return self._user_info["id"]
 
-    def get_list_id(self) -> int: return self._event_list_id
+    def get_list_id(self) -> int:
+        return self._event_list_id
 
-    def clear_user(self, is_finished: bool):
-        if is_finished:
-            other_info = ""
-            if "temp" in self._user_info.keys():
-                del self._user_info["temp"]
-            keys = self._user_info.keys()
-            keys = list(keys)[5:]
-            for i in keys:
-                other_info += i + " = " + str(self._user_info[i]) + ";\n "
-            other_info = other_info[0:-2]
-            insert("participants",
-                   id=int(self._user_info["id"]),
-                   username=self._user_info["username"],
-                   name=self._user_info["name"],
-                   surname=self._user_info["surname"],
-                   patronymic=self._user_info["patronymic"],
-                   other_info=other_info,
-                   event=self._event,
-                   add_date=get_datetime_now())
-        del self
+    def add_user_to_db(self):
+        other_info = ""
+        if "temp" in self._user_info.keys():
+            del self._user_info["temp"]
+        keys = self._user_info.keys()
+        keys = list(keys)[5:]
+        for i in keys:
+            other_info += i + " = " + str(self._user_info[i]) + ";\n "
+        other_info = other_info[0:-2]
+        insert("participants",
+               id=int(self._user_info["id"]),
+               username=self._user_info["username"],
+               name=self._user_info["name"],
+               surname=self._user_info["surname"],
+               patronymic=self._user_info["patronymic"],
+               other_info=other_info,
+               event=self._event,
+               add_date=get_datetime_now())

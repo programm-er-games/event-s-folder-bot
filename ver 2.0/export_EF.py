@@ -52,11 +52,11 @@ def send_file(bot, user_id):
             file = open(path, "rb")
             bot.send_document(user_id, file)
             file.close()
-            os.remove(f"\"{path}\"")
+            os.remove(f"{path}")
             folder = path.split("\\")
             folder = folder[0:-1:1]
             folder = "\\".join(folder)
-            os.rmdir(f"\"{folder}\"")
+            os.rmdir(f"{folder}")
         elif system == "posix":
             file = open(path, "rb")
             bot.send_document(user_id, file)
